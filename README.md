@@ -420,5 +420,309 @@ export default function TabLayout() {
   );
 }
 
+---
+
+## Построение экрана
+
+### 1 Разбор экрана
+
+Прежде чем создавать этот экран с помощью кода, давайте разберём его на основные элементы.
+
+Есть два основных элемента:
+- В центре экрана отображается большое изображение
+- В нижней части экрана расположены две кнопки
+
+Первая кнопка содержит несколько компонентов. Родительский элемент имеет жёлтую рамку и содержит иконку и текстовые компоненты внутри строки.
+
+### 2 Показ изображений
+
+Мы будем использовать библиотеку для отображения изображения в приложении. Он предоставляет кроссплатформенный компонент для загрузки и рендеринга изображения. Он уже включен в стандартный шаблон проекта, который мы используем.expo-image<Image>
+
+Компонент Image принимает источник изображения в качестве своего значения. Исходный код может быть как статическим активом, так и URL. Например, исходный код, требуемый из каталога ассетов/изображений, является статичным. Он также может поступать из сети как объект.uri
+
+Чтобы использовать компонент Image в файле src/app/(tabs)/index.tsx:
+
+1. Импортируйте из библиотеки.Imageexpo-image
+2. Создайте переменную, чтобы использовать ассеты/изображения/background-image.png файл в качестве проппа компонента.PlaceholderImagesourceImage
+
+import { View, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
+
+const PlaceholderImage = require('@/assets/images/background-image.png');
+
+export default function Index() {
+  return (
+    <View style={styles.container}>
+      <View style={styles.imageContainer}>
+        <Image source={PlaceholderImage} style={styles.image} />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#25292e',
+    alignItems: 'center',
+  },
+  imageContainer: {
+    flex: 1,
+  },
+  image: {
+    width: 320,
+    height: 440,
+    borderRadius: 18,
+  },
+});
+
+### 3 Разделить компоненты на файлы
+
+Давайте разделим код на несколько файлов по мере добавления новых компонентов на этот экран. В течение этого урока мы будем использовать каталог компонентов для создания пользовательских компонентов.
+
+1. Создайте каталог компонентов внутри src, а внутри него — файл image-viewer.tsx.
+2. Переместите код, чтобы отображать изображение в этом файле вместе со стилями.image
+
+import { ImageSourcePropType, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
+
+type Props = {
+  imgSource: ImageSourcePropType;
+};
+
+export default function ImageViewer({ imgSource }: Props) {
+  return <Image source={imgSource} style={styles.image} />;
+}
+
+const styles = StyleSheet.create({
+  image: {
+    width: 320,
+    height: 440,
+    borderRadius: 18,
+  },
+});
+
+Импортируйте и используйте его в src/app/(tabs)/index.tsx:ImageViewer
+
+import { StyleSheet, View } from 'react-native';
+
+import ImageViewer from '@/components/image-viewer';
+
+const PlaceholderImage = require('@/assets/images/background-image.png');
+
+export default function Index() {
+  return (
+    <View style={styles.container}>
+      <View style={styles.imageContainer}>
+        <ImageViewer imgSource={PlaceholderImage} />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#25292e',
+    alignItems: 'center',
+  },
+  imageContainer: {
+    flex: 1,
+  },
+});
+
+### 4 Создайте кнопки с помощью Pressable
+
+React Native включает несколько различных компонентов для обработки сенсорных событий, но <Pressable> рекомендуется за свою гибкость. Он может обнаруживать одиночные нажатия, долгие нажатия, запускать отдельные события при нажатии и отпускании кнопки и многое другое.
+
+В дизайне нам нужно создать две кнопки. У каждого свой стиль и ярлык. Давайте начнём с создания многоразового компонента для этих кнопок. Создайте файл button.tsx внутри каталога src/components с помощью следующего кода:
+
+import { StyleSheet, View, Pressable, Text } from 'react-native';
+
+type Props = {
+  label: string;
+};
+
+export default function Button({ label }: Props) {
+  return (
+    <View style={styles.buttonContainer}>
+      <Pressable style={styles.button} onPress={() => alert('You pressed a button.')}>
+        <Text style={styles.buttonLabel}>{label}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  buttonContainer: {
+    width: 320,
+    height: 68,
+    marginHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 3,
+  },
+  button: {
+    borderRadius: 10,
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  buttonLabel: {
+    color: '#fff',
+    fontSize: 16,
+  },
+});
+
+Приложение показывает оповещение при нажатии любой из кнопок на экране. Это происходит из-за призывов к его реквизиту. Давайте импортируем этот компонент в файл src/app/(tabs)/index.tsx и добавим стили, которые инкапсулируют эти кнопки:<Pressable>alert()onPress<View>
+
+import { View, StyleSheet } from 'react-native';
+
+import Button from '@/components/button';
+import ImageViewer from '@/components/image-viewer';
+
+const PlaceholderImage = require("@/assets/images/background-image.png");
+
+export default function Index() {
+  return (
+    <View style={styles.container}>
+      <View style={styles.imageContainer}>
+        <ImageViewer imgSource={PlaceholderImage} />
+      </View>
+      <View style={styles.footerContainer}>
+        <Button label="Choose a photo" />
+        <Button label="Use this photo" />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#25292e',
+    alignItems: 'center',
+  },
+  imageContainer: {
+    flex: 1,
+  },
+  footerContainer: {
+    flex: 1 / 3,
+    alignItems: 'center',
+  },
+});
+
+### 5 Улучшите компонент многоразовой кнопки
+Кнопка «Выбрать фото» требует другого стиля, чем кнопка «Использовать эту фотографию», поэтому мы добавим новый реквизит для темы кнопок, который позволит применить тему. Эта кнопка также имеет иконку перед этикеткой. Мы используем иконку из библиотеки.primary@expo/vector-icons
+
+Чтобы загрузить и отобразить значок на кнопке, давайте воспользуемся из библиотеки. Измените src/components/button.tsx, чтобы добавить следующий фрагмент кода:FontAwesome
+
+import { StyleSheet, View, Pressable, Text } from 'react-native';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+
+type Props = {
+  label: string;
+  theme?: 'primary';
+};
+
+export default function Button({ label, theme }: Props) {
+  if (theme === 'primary') {
+  return (
+      <View
+        style={[
+          styles.buttonContainer,
+          { borderWidth: 4, borderColor: '#ffd33d', borderRadius: 18 },
+        ]}>
+        <Pressable
+          style={[styles.button, { backgroundColor: '#fff' }]}
+          onPress={() => alert('You pressed a button.')}>
+          <FontAwesome name="picture-o" size={18} color="#25292e" style={styles.buttonIcon} />
+          <Text style={[styles.buttonLabel, { color: '#25292e' }]}>{label}</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.buttonContainer}>
+      <Pressable style={styles.button} onPress={() => alert('You pressed a button.')}>
+        <Text style={styles.buttonLabel}>{label}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  buttonContainer: {
+    width: 320,
+    height: 68,
+    marginHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 3,
+  },
+  button: {
+    borderRadius: 10,
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  buttonIcon: {
+    paddingRight: 8,
+  },
+  buttonLabel: {
+    color: '#fff',
+    fontSize: 16,
+  },
+});
+
+Давайте узнаем, что делает вышеуказанный код:
+
+Кнопка основной темы использует встроенные стили, которые переопределяют стили, определённые в предмете, непосредственно передающем в реквизит.StyleSheet.create()style
+Компонент в основной теме использует свойство с значением, чтобы задать фон кнопки белым. Если добавить это свойство к , значение цвета фона будет установлено как для основной, так и для нестилизованной.<Pressable>backgroundColor#fffstyles.button
+Встроенные стили используют JavaScript и переопределяют стандартные стили для определённого значения.
+Теперь измените файл src/app/(tabs)/index.tsx, чтобы использовать проп на первой кнопке.theme="primary"
+
+import { View, StyleSheet } from 'react-native';
+
+import Button from '@/components/button';
+import ImageViewer from '@/components/image-viewer';
+
+const PlaceholderImage = require('@/assets/images/background-image.png');
+
+export default function Index() {
+  return (
+    <View style={styles.container}>
+      <View style={styles.imageContainer}>
+        <ImageViewer imgSource={PlaceholderImage} />
+      </View>
+      <View style={styles.footerContainer}>
+        <Button theme="primary" label="Choose a photo" />
+        <Button label="Use this photo" />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#25292e',
+    alignItems: 'center',
+  },
+  imageContainer: {
+    flex: 1,
+  },
+  footerContainer: {
+    flex: 1 / 3,
+    alignItems: 'center',
+  },
+});
+
+
 
 ---
