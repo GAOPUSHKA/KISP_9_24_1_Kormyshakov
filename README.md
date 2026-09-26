@@ -254,3 +254,171 @@ const styles = StyleSheet.create({
 });
 
 ---
+
+## Добавление навигации
+
+### Основы Expo Router
+
+Expo Router — это фреймворк маршрутизации на основе файлов для React Native и веб-приложений. Он управляет навигацией между экранами и использует одни и те же компоненты на нескольких платформах. Чтобы начать, нам нужно знать о следующих конвенциях:
+
+- Каталог приложений: Специальная директория, содержащая только маршруты и их макеты. Любые файлы, добавленные в эту директорию, становятся экраном внутри нашего нативного приложения и страницей в интернете. В стандартном шаблоне он расположен на src/app.
+- Корневая верстка: файл src/app/_layout.tsx. Он определяет общие элементы интерфейса, такие как заголовки и панели вкладок, чтобы они были согласованы между разными маршрутами.
+- Правила имён файлов: Имена индексных файлов, такие как index.tsx, совпадают с родительским каталогом и не добавляют сегмент пути. Например, файл index.tsx в каталоге src/app совпадает с маршрутом./
+- Файл маршрута экспортирует компонент React в качестве своего значения по умолчанию. Он может использовать либо , , , либо расширение..js.jsx.ts.tsx
+- Android, iOS и веб имеют единую навигационную структуру.
+
+### 1 Добавьте новый экран в стек
+
+Давайте создадим новый файл с названием about.tsx внутри папки src/app. При навигации пользователя по маршруту отображается имя экрана./about
+
+import { Text, View, StyleSheet } from 'react-native';
+
+export default function AboutScreen() {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.text}>About screen</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#25292e',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  text: {
+    color: '#fff',
+  },
+});
+
+Внутри src/app/_layout.tsx:
+Добавьте компонент и проп для обновления названия маршрута.<Stack.Screen />options/about
+Обновите название маршрута, добавив проп./indexHomeoptions
+
+import { Stack } from 'expo-router';
+
+export default function RootLayout() {
+  return (
+    <Stack>
+      <Stack.Screen name="index" options={{ title: 'Home' }} />
+      <Stack.Screen name="about" options={{ title: 'About' }} />
+    </Stack>
+  );
+}
+
+### 2 Навигация между экранами
+Мы используем компонент Expo Router для навигации от маршрута к маршруту. Это компонент React, который рендерит a с заданным проп.Link/index/about<Text>href
+
+Импортируйте компонент изнутри src/app/index.tsx.Linkexpo-router
+Добавляйте компонент за компонентом и пропускайте проп вместе с маршрутом.Link<Text>href/about
+Добавьте стиль , и в компонент. Он требует тех же реквизитов, что и компонент.fontSizetextDecorationLinecolorLink<Text>
+src/app/index.tsx
+
+import { Text, View, StyleSheet } from 'react-native';
+import { Link } from 'expo-router';
+
+export default function Index() {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.text}>Home screen</Text>
+      <Link href="/about" style={styles.button}>
+        Go to About screen
+      </Link>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#25292e',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  text: {
+    color: '#fff',
+  },
+  button: {
+    fontSize: 20,
+    textDecorationLine: 'underline',
+    color: '#fff',
+  },
+});
+
+### 3 Добавьте маршрут, который не найден
+Если маршрута нет, мы можем использовать маршрут для отображения экрана запасного варианта. Это полезно, когда мы хотим показывать пользовательский экран при навигации по неправильному маршруту на мобильном устройстве, вместо того чтобы вылетать приложение или отображать ошибку 404 в интернете. Expo Router использует специальный файл +not-found.tsx для обработки этого случая.+not-found
+
+Создайте новый файл с именем +not-found.tsx внутри каталога src/app, чтобы добавить компонент.NotFoundScreen
+Добавьте реквизит из кнопки для отображения пользовательского экрана для этого маршрута.optionsStack.Screen
+Добавьте компонент для навигации по маршруту, который является нашим запасным маршрутом.Link/
+src/app/+not-found.tsx
+
+import { View, StyleSheet } from 'react-native';
+import { Link, Stack } from 'expo-router';
+
+export default function NotFoundScreen() {
+  return (
+    <>
+      <Stack.Screen options={{ title: 'Oops! Not Found' }} />
+      <View style={styles.container}>
+        <Link href="/" style={styles.button}>
+          Go back to Home screen!
+        </Link>
+      </View>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#25292e',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  button: {
+    fontSize: 20,
+    textDecorationLine: 'underline',
+    color: '#fff',
+  },
+});
+
+Чтобы проверить это, перейдите к URL в веб-браузере, так как там легко изменить путь URL. Приложение должно отображать компонент:http:localhost:8081/123NotFoundScreen
+
+### 4 Добавьте навигатор нижней вкладки
+
+Мы добавим навигатор по нижней вкладке в наше приложение и повторно используем существующие экраны «Домой» и «О нас» для создания макета вкладок. Мы также используем навигатор стека в корневом макете, чтобы маршрут отображался поверх любых других вложенных навигаторов.+not-found
+
+1. Внутри каталога src/app добавьте подкаталог (вкладки). Эта специальная директория используется для группировки маршрутов и их отображения в нижней панели вкладок.
+2. Создайте файл (tabs)/_layout.tsx внутри каталога. Он будет использоваться для определения раскладки вкладок, который отличается от корневого макета.
+3. Переместите существующие файлы index.tsx и about.tsx внутри папки (вкладки). Структура каталога 
+
+Обновите корневой файл макета, чтобы добавить маршрут:(tabs)
+
+import { Stack } from 'expo-router';
+
+export default function RootLayout() {
+  return (
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    </Stack>
+  );
+}
+Внутри (tabs)/_layout.tsx добавьте компонент для определения расположения нижней вкладки:Tabs
+
+import { Tabs } from 'expo-router';
+
+export default function TabLayout() {
+  return (
+    <Tabs>
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
+      <Tabs.Screen name="about" options={{ title: 'About' }} />
+    </Tabs>
+  );
+}
+
+
+---
