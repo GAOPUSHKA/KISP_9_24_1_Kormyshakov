@@ -615,6 +615,7 @@ const styles = StyleSheet.create({
 });
 
 ### 5 Улучшите компонент многоразовой кнопки
+
 Кнопка «Выбрать фото» требует другого стиля, чем кнопка «Использовать эту фотографию», поэтому мы добавим новый реквизит для темы кнопок, который позволит применить тему. Эта кнопка также имеет иконку перед этикеткой. Мы используем иконку из библиотеки.primary@expo/vector-icons
 
 Чтобы загрузить и отобразить значок на кнопке, давайте воспользуемся из библиотеки. Измените src/components/button.tsx, чтобы добавить следующий фрагмент кода:FontAwesome
@@ -723,6 +724,274 @@ const styles = StyleSheet.create({
   },
 });
 
+---
 
+## Использования набора изображений
+
+React Native предоставляет встроенные компоненты в качестве стандартных строительных блоков, такие как , , и . Мы создаём функцию для выбора изображения из медиагалереи устройства. Это невозможно с основными компонентами, и нам понадобится библиотека, чтобы добавить эту функцию в наше приложение.<View><Text><Pressable>
+
+Мы используем expo-image-picker, библиотеку от Expo SDK.
+
+### 1 Установка expo-image-picker
+
+Чтобы установить библиотеку, остановите сервер разработки, нажав + в терминале, затем выполните следующую команду:expo-image-pickerCtrlC
+
+npx expo install expo-image-picker
+The npx expo install Команда установит библиотеку и добавит её в зависимости проекта в package.json.
+
+### 2 Выбор изображения из медиабиблиотеки устройства
+expo-image-picker предоставляет способ отображения системного интерфейса путём выбора изображения или видео из медиатеки устройства. Мы используем основную тематическую кнопку, созданную в предыдущей главе, чтобы выбрать изображение из медиабиблиотеки устройства и создать функцию запуска библиотеки изображений устройства для реализации этой функции.launchImageLibraryAsync()
+
+В src/app/(tabs)/index.tsx импортируйте библиотеку и создайте функцию внутри компонента:expo-image-pickerpickImageAsync()Index
+
+import * as ImagePicker from 'expo-image-picker';
+
+export default function Index() {
+  const pickImageAsync = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      console.log(result);
+    } else {
+      alert('You did not select any image.');
+    }
+  };
+
+}
+Давайте узнаем, что делает вышеуказанный код:
+Он получает объект для указания различных опций. Этот объект — это launchImageLibraryAsync()ImagePickerOptions Объект, который мы проходим при вызове метода.
+При установке на , пользователь может обрезать изображение во время выбора на Android и iOS.allowsEditingtrue
+
+### 3 Обновить компонент кнопок
+При нажатии основной кнопки мы вызовем функцию компонента. Обновите проп компонента в src/components/button.tsx:pickImageAsync()ButtononPressButton
+
+import { StyleSheet, View, Pressable, Text } from 'react-native';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+
+type Props = {
+  label: string;
+  theme?: 'primary';
+  onPress?: () => void;
+};
+
+export default function Button({ label, theme, onPress }: Props) {
+  if (theme === 'primary') {
+    return (
+      <View
+        style={[
+          styles.buttonContainer,
+          { borderWidth: 4, borderColor: '#ffd33d', borderRadius: 18 },
+        ]}>
+        <Pressable style={[styles.button, { backgroundColor: '#fff' }]} onPress={onPress}>
+          <FontAwesome name="picture-o" size={18} color="#25292e" style={styles.buttonIcon} />
+          <Text style={[styles.buttonLabel, { color: '#25292e' }]}>{label}</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.buttonContainer}>
+      <Pressable style={styles.button} onPress={() => alert('You pressed a button.')}>
+        <Text style={styles.buttonLabel}>{label}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  buttonContainer: {
+    width: 320,
+    height: 68,
+    marginHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 3,
+  },
+  button: {
+    borderRadius: 10,
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  buttonIcon: {
+    paddingRight: 8,
+  },
+  buttonLabel: {
+    color: '#fff',
+    fontSize: 16,
+  },
+});
+
+В src/app/(tabs)/index.tsx добавьте функцию в проп на первом .pickImageAsync()onPress<Button>
+
+import { View, StyleSheet } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+
+import Button from '@/components/button';
+import ImageViewer from '@/components/image-viewer';
+
+const PlaceholderImage = require('@/assets/images/background-image.png');
+
+export default function Index() {
+  const pickImageAsync = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      console.log(result);
+    } else {
+      alert('You did not select any image.');
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.imageContainer}>
+        <ImageViewer imgSource={PlaceholderImage} />
+      </View>
+      <View style={styles.footerContainer}>
+        <Button theme="primary" label="Choose a photo" onPress={pickImageAsync} />
+        <Button label="Use this photo" />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#25292e',
+    alignItems: 'center',
+  },
+  imageContainer: {
+    flex: 1,
+  },
+  footerContainer: {
+    flex: 1 / 3,
+    alignItems: 'center',
+  },
+});
+
+Функция вызывает и затем обрабатывает результат. Метод возвращает объект с информацией о выбранном изображении.pickImageAsync()ImagePicker.launchImageLibraryAsync()launchImageLibraryAsync()
+
+Вот пример объекта и свойств, которые он содержит:result
+{
+  "assets": [
+    {
+      "assetId": null,
+      "base64": null,
+      "duration": null,
+      "exif": null,
+      "fileName": "ea574eaa-f332-44a7-85b7-99704c22b402.jpeg",
+      "fileSize": 4513577,
+      "height": 4570,
+      "mimeType": "image/jpeg",
+      "rotation": null,
+      "type": "image",
+      "uri": "file:///data/user/0/host.exp.exponent/cache/ExperienceData/%2540anonymous%252FStickerSmash-13f21121-fc9d-4ec6-bf89-bf7d6165eb69/ImagePicker/ea574eaa-f332-44a7-85b7-99704c22b402.jpeg",
+      "width": 2854
+
+### 4 Используйте выбранное изображение
+Объект предоставляет массив выбранного изображения. Давайте возьмём это значение из picker изображений и используем его, чтобы показать выбранное изображение в приложении.resultassetsuri
+
+Измените файл src/app/(tabs)/index.tsx:
+
+1. Объявим переменную состояния, вызванную с помощью selectedImageuseState крючок от React. Мы используем эту переменную состояния, чтобы сохранить URI выбранного изображения.
+2. Обновите функцию, чтобы сохранить URI изображения в переменной состояния.pickImageAsync()selectedImage
+3. Передайте его как реквизит компоненту.selectedImageImageViewer
+
+import { View, StyleSheet } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { useState } from 'react';
+
+import Button from '@/components/button';
+import ImageViewer from '@/components/image-viewer';
+
+const PlaceholderImage = require('@/assets/images/background-image.png');
+
+export default function Index() {
+  const [selectedImage, setSelectedImage] = useState<string | undefined>(undefined);
+
+  const pickImageAsync = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+    } else {
+      alert('You did not select any image.');
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.imageContainer}>
+        <ImageViewer imgSource={PlaceholderImage} selectedImage={selectedImage} />
+      </View>
+      <View style={styles.footerContainer}>
+        <Button theme="primary" label="Choose a photo" onPress={pickImageAsync} />
+        <Button label="Use this photo" />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#25292e',
+    alignItems: 'center',
+  },
+  imageContainer: {
+    flex: 1,
+  },
+  footerContainer: {
+    flex: 1 / 3,
+    alignItems: 'center',
+  },
+});
+
+Передайте реквизит компоненту, чтобы отобразить выбранное изображение вместо временного изображения.selectedImageImageViewer
+
+1. Модифицируйте файл src/components/image-viewer.tsx, чтобы он принял проп.selectedImage
+2. Источник изображения становится длинным, поэтому давайте также переместим его в отдельную переменную под названием .imageSource
+3. Передайте как значение пропеллера на компоненте.imageSourcesourceImage
+
+import { ImageSourcePropType, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
+
+type Props = {
+  imgSource: ImageSourcePropType;
+  selectedImage?: string;
+};
+
+export default function ImageViewer({ imgSource, selectedImage }: Props) {
+  const imageSource = selectedImage ? { uri: selectedImage } : imgSource;
+
+  return <Image source={imageSource} style={styles.image} />;
+}
+
+const styles = StyleSheet.create({
+  image: {
+    width: 320,
+    height: 440,
+    borderRadius: 18,
+  },
+});
+
+В приведённом выше фрагменте компонент Image использует условный оператор для загрузки исходного источника изображения. Выбранное изображение — это uri Строка, а не локальный актив, как заполняющее изображение.
 
 ---
